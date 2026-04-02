@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildLaCalendarGrid,
+  formatLaDateTimeList,
   getLaMonthRangeUtcForCalendarMonth,
   groupEventsByLaDate,
   parseCalendarMonthQuery,
@@ -37,6 +38,14 @@ describe("groupEventsByLaDate", () => {
       { createdAt: new Date("2026-04-02T10:00:00.000Z") },
     ]);
     expect([...map.values()].every((arr) => arr.length >= 1)).toBe(true);
+  });
+});
+
+describe("formatLaDateTimeList", () => {
+  it("formats in LA", () => {
+    const s = formatLaDateTimeList(new Date("2026-04-02T21:09:29.900Z"));
+    expect(s).toMatch(/2026/);
+    expect(s).toMatch(/Apr/);
   });
 });
 

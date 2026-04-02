@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  formatLaDateTimeList,
   formatLaTimeLabel,
   getLaMonthRangeUtcForCalendarMonth,
   groupEventsByLaDate,
@@ -38,21 +39,26 @@ export default async function DashboardPage({
 
     const laDate = formatLaDateString(now);
     const todayLaKey = formatLaDateString(now);
-    const { usedHours, remainingHours, cap } = await monthSummary(now);
-    const events = await RegistrationEvent.find()
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .lean()
-      .exec();
 
     const { start: monthStart, endExclusive: monthEnd } =
       getLaMonthRangeUtcForCalendarMonth(calYear, calMonth);
-    const monthEvents = await RegistrationEvent.find({
-      createdAt: { $gte: monthStart, $lt: monthEnd },
-    })
-      .sort({ createdAt: 1 })
-      .lean()
-      .exec();
+
+    const [{ usedHours, remainingHours, cap }, events, monthEvents, sched] =
+      await Promise.all([
+        monthSummary(now),
+        RegistrationEvent.find()
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean()
+          .exec(),
+        RegistrationEvent.find({
+          createdAt: { $gte: monthStart, $lt: monthEnd },
+        })
+          .sort({ createdAt: 1 })
+          .lean()
+          .exec(),
+        ScheduleState.findOne({ laDate }).lean(),
+      ]);
 
     const grouped = groupEventsByLaDate(monthEvents);
     const eventsByDay: Record<string, CalendarDayEvent[]> = {};
@@ -66,10 +72,8 @@ export default async function DashboardPage({
       }));
     }
 
-    const sched = await ScheduleState.findOne({ laDate }).lean();
-
     return (
-      <div className="mx-auto flex min-h-full max-w-4xl flex-col gap-8 px-4 py-10">
+      <main className="mx-auto flex w-full min-h-full max-w-4xl flex-col gap-8 px-4 py-10">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -85,16 +89,22 @@ export default async function DashboardPage({
           <DashboardActions />
         </header>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <section
+          className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+          aria-labelledby="schedule-heading"
+        >
+          <h2
+            id="schedule-heading"
+            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
             Today&apos;s schedule (LA)
           </h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {sched
-              ? `Target run: 2:${String(sched.targetMinute).padStart(2, "0")} · `
-              : "No schedule row yet — first cron tick in the 2am window will create one. "}
+              ? `Target minute (LA night window): 2:${String(sched.targetMinute).padStart(2, "0")}. `
+              : "No schedule row yet — the daily cron during the LA 2am hour creates it. "}
             {sched?.autoRunCompletedAt
-              ? `Auto run completed at ${new Date(sched.autoRunCompletedAt).toISOString()}`
+              ? `Last auto run: ${formatLaDateTimeList(sched.autoRunCompletedAt)}.`
               : "Auto run not completed yet today."}
           </p>
         </section>
@@ -107,8 +117,11 @@ export default async function DashboardPage({
           eventsByDay={eventsByDay}
         />
 
-        <section>
-          <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <section aria-labelledby="events-heading">
+          <h2
+            id="events-heading"
+            className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
             Recent events
           </h2>
           <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
@@ -133,8 +146,11 @@ export default async function DashboardPage({
                     <span className="text-xs text-zinc-500">
                       {ev.trigger} · {ev.durationHours} h
                     </span>
-                    <time className="text-xs text-zinc-500">
-                      {new Date(ev.createdAt).toISOString()}
+                    <time
+                      className="text-xs text-zinc-500"
+                      dateTime={new Date(ev.createdAt).toISOString()}
+                    >
+                      {formatLaDateTimeList(ev.createdAt)}
                     </time>
                   </div>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -147,11 +163,14 @@ export default async function DashboardPage({
         </section>
 
         <p className="text-center text-xs text-zinc-400">
-          <Link href="/" className="underline">
+          <Link
+            href="/"
+            className="rounded underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+          >
             Home
           </Link>
         </p>
-      </div>
+      </main>
     );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

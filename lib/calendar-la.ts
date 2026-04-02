@@ -115,3 +115,8 @@ export function groupEventsByLaDate<T extends RegistrationEventLike>(
 export function formatLaTimeLabel(iso: Date | string): string {
   return formatInTimeZone(new Date(iso), TZ, "h:mm a");
 }
+
+/** For list rows: date + time in LA (readable, not raw ISO). */
+export function formatLaDateTimeList(iso: Date | string): string {
+  return formatInTimeZone(new Date(iso), TZ, "MMM d, yyyy · h:mm a");
+}
