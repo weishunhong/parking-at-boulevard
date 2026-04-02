@@ -98,5 +98,6 @@ export function parkingEnvSummaryForLogs(e: ParkingFormEnv): Record<string, bool
     PARKING_EMAIL: Boolean(e.email),
     PARKING_CONTACT_NAME: Boolean(e.contactName),
     PARKING_COOKIE: Boolean(e.cookie),
+    PARKING_SEND_CONTAINER: Boolean(process.env.PARKING_SEND_CONTAINER?.trim()),
   };
 }

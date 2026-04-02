@@ -4,6 +4,7 @@ import {
   postParkingRegistration,
   resolveParkingPostUrl,
 } from "./parking-post";
+import { buildParkingSendUrl, postParkingSend } from "./parking-send";
 import {
   getParkingFormEnv,
   missingRecommendedParkingFormEnv,
@@ -171,6 +172,33 @@ async function submitPermitFlow(
       metadata: {
         postUrl: postUrl.slice(0, 400),
         status: post.status,
+      },
+    };
+  }
+
+  const sendUrl = buildParkingSendUrl(form);
+  if (sendUrl) {
+    const send = await postParkingSend(sendUrl, form);
+    if (!send.ok) {
+      return {
+        success: false,
+        message: `Registration API HTTP ${post.status} OK, but send (email) HTTP ${send.status}: ${parseApiErrorHint(send.bodyText)}`,
+        durationHours,
+        metadata: {
+          postUrl: postUrl.slice(0, 400),
+          sendUrl: sendUrl.slice(0, 400),
+          responsePreview: post.bodyText.slice(0, 500),
+        },
+      };
+    }
+    return {
+      success: true,
+      message: `Registration API HTTP ${post.status} OK; send HTTP ${send.status} OK`,
+      durationHours,
+      metadata: {
+        postUrl: postUrl.slice(0, 400),
+        responsePreview: post.bodyText.slice(0, 500),
+        sendUrl: sendUrl.slice(0, 400),
       },
     };
   }

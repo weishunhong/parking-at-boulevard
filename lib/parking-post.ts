@@ -28,9 +28,28 @@ export function substitutePlaceholders(
   });
 }
 
+/**
+ * When `PARKING_POST_URL` is copied from the browser, the query string often
+ * still contains `duration=PT1H` (or similar). The API uses that for the permit
+ * length. We override `duration` and refresh `viewpoint` from the current run
+ * so `REGISTRATION_DURATION_HOURS` / `PARKING_LIFETIME_ISO` actually apply.
+ */
 export function resolveParkingPostUrl(form: ParkingFormEnv): string | null {
   const full = process.env.PARKING_POST_URL?.trim();
-  if (full) return full;
+  if (full) {
+    try {
+      const u = new URL(full);
+      if (u.searchParams.has("duration")) {
+        u.searchParams.set("duration", form.lifetimeIso);
+      }
+      if (u.searchParams.has("viewpoint")) {
+        u.searchParams.set("viewpoint", new Date().toISOString());
+      }
+      return u.toString();
+    } catch {
+      return full;
+    }
+  }
   const rel = process.env.PARKING_POST_RELATIVE_PATH?.trim();
   if (!rel) return null;
   const path = rel.replace(/^\/+/, "");
