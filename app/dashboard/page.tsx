@@ -1,28 +1,75 @@
 import Link from "next/link";
+import {
+  formatLaTimeLabel,
+  getLaMonthRangeUtcForCalendarMonth,
+  groupEventsByLaDate,
+  parseCalendarMonthQuery,
+} from "@/lib/calendar-la";
 import { connectDb } from "@/lib/db";
 import { formatLaDateString } from "@/lib/la";
 import { monthSummary } from "@/lib/monthly";
 import { RegistrationEvent } from "@/models/RegistrationEvent";
 import { ScheduleState } from "@/models/ScheduleState";
 import { DashboardActions } from "./dashboard-actions";
+import {
+  type CalendarDayEvent,
+  RegistrationCalendar,
+} from "./registration-calendar";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   try {
     await connectDb();
     const now = new Date();
+    const sp = (await searchParams) ?? {};
+    const { year: calYear, month: calMonth } = parseCalendarMonthQuery(
+      sp,
+      now,
+    );
+    const { year: currentLaYear, month: currentLaMonth } =
+      parseCalendarMonthQuery({}, now);
+    const isViewingCurrentMonth =
+      calYear === currentLaYear && calMonth === currentLaMonth;
+
     const laDate = formatLaDateString(now);
+    const todayLaKey = formatLaDateString(now);
     const { usedHours, remainingHours, cap } = await monthSummary(now);
     const events = await RegistrationEvent.find()
       .sort({ createdAt: -1 })
       .limit(50)
       .lean()
       .exec();
+
+    const { start: monthStart, endExclusive: monthEnd } =
+      getLaMonthRangeUtcForCalendarMonth(calYear, calMonth);
+    const monthEvents = await RegistrationEvent.find({
+      createdAt: { $gte: monthStart, $lt: monthEnd },
+    })
+      .sort({ createdAt: 1 })
+      .lean()
+      .exec();
+
+    const grouped = groupEventsByLaDate(monthEvents);
+    const eventsByDay: Record<string, CalendarDayEvent[]> = {};
+    for (const [dateKey, list] of grouped) {
+      eventsByDay[dateKey] = list.map((ev) => ({
+        id: String(ev._id),
+        timeLabel: formatLaTimeLabel(ev.createdAt),
+        status: ev.status as "success" | "failure",
+        trigger: ev.trigger as "cron" | "manual",
+        durationHours: ev.durationHours,
+      }));
+    }
+
     const sched = await ScheduleState.findOne({ laDate }).lean();
 
     return (
-      <div className="mx-auto flex min-h-full max-w-3xl flex-col gap-8 px-4 py-10">
+      <div className="mx-auto flex min-h-full max-w-4xl flex-col gap-8 px-4 py-10">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -51,6 +98,14 @@ export default async function DashboardPage() {
               : "Auto run not completed yet today."}
           </p>
         </section>
+
+        <RegistrationCalendar
+          year={calYear}
+          month={calMonth}
+          todayLaKey={todayLaKey}
+          isViewingCurrentMonth={isViewingCurrentMonth}
+          eventsByDay={eventsByDay}
+        />
 
         <section>
           <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
