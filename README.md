@@ -29,6 +29,11 @@ Next.js dashboard for automated parking permit registration: monthly hour cap (L
 | `npm test`     | Vitest (unit tests) |
 | `npm run test:watch` | Vitest watch mode |
 
+## Vercel
+
+- **Framework preset:** Next.js (not Create React App). If the build runs `react-scripts build`, open **Project → Settings → General** and remove the custom **Build Command**, or keep the repo [`vercel.json`](vercel.json) which sets `buildCommand` to `npm run build`.
+- Copy all env vars from `.env.local` into the Vercel project **Environment Variables** (including `MONGODB_URI` for Atlas).
+
 ## License
 
 MIT
