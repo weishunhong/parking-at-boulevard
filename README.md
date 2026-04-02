@@ -44,6 +44,11 @@ Next.js dashboard for automated parking permit registration: monthly hour cap (L
 
 3. Copy env vars from `.env.local` into **Settings → Environment Variables** (including Atlas `MONGODB_URI`). Leave `CRON_SCHEDULE_MODE` unset or `hobby` on Hobby; use `pro` only with Pro cron schedules.
 
+### “Server error” / dashboard won’t load
+
+- **Cause:** usually missing or invalid `MONGODB_URI` on Vercel, or Atlas blocking connections.
+- **Fix:** use an **Atlas** `mongodb+srv://…` URI (not `127.0.0.1`), allow **Network Access** in Atlas, **Redeploy** after saving env vars.
+
 ## License
 
 MIT
