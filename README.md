@@ -33,8 +33,16 @@ Next.js dashboard for automated parking permit registration: monthly hour cap (L
 
 ## Vercel
 
-- **Framework preset:** Next.js (not Create React App). If the build runs `react-scripts build`, open **Project → Settings → General** and remove the custom **Build Command**, or keep the repo [`vercel.json`](vercel.json) which sets `buildCommand` to `npm run build`.
-- Copy all env vars from `.env.local` into the Vercel project **Environment Variables** (including `MONGODB_URI` for Atlas). Leave `CRON_SCHEDULE_MODE` unset or `hobby` on Hobby; use `pro` only if you upgrade and use multi-tick crons.
+1. **Project → Settings → General → Build & Development Settings**
+   - **Framework Preset:** **Next.js** (not “Other” or Create React App).
+   - **Root Directory:** `./` (repo root).
+   - **Build Command:** leave **empty** (uses `next build` from `package.json`).
+   - **Output Directory:** leave **empty**. If you see `build` here, **delete it** — Next.js on Vercel does not use a `build` folder; a wrong value causes *No Output Directory named "build" found*.
+   - **Install Command:** leave **empty** (default `npm install`), unless you know you need otherwise.
+
+2. The repo [`vercel.json`](vercel.json) only defines **Cron**; it does not set `outputDirectory` or CRA-style paths.
+
+3. Copy env vars from `.env.local` into **Settings → Environment Variables** (including Atlas `MONGODB_URI`). Leave `CRON_SCHEDULE_MODE` unset or `hobby` on Hobby; use `pro` only with Pro cron schedules.
 
 ## License
 
