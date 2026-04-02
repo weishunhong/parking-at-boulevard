@@ -4,6 +4,7 @@ import { connectDb } from "./db";
 import {
   SCHEDULE_LA_WINDOW_END_MINUTE,
   SCHEDULE_LA_WINDOW_START_MINUTE,
+  getCronScheduleMode,
 } from "./env";
 import { formatLaDateString, getLaClock } from "./la";
 import { registerViaAutomation } from "./register";
@@ -24,6 +25,18 @@ export type CronRunResult =
       message: string;
     };
 
+function laHourAllowedForCron(clock: {
+  hour: number;
+  minute: number;
+}): boolean {
+  const mode = getCronScheduleMode();
+  if (mode === "hobby") {
+    // Single daily UTC tick can land at ~2:xx (PST) or ~3:xx (PDT); allow both.
+    return clock.hour === 2 || clock.hour === 3;
+  }
+  return clock.hour === 2;
+}
+
 export async function runScheduledAutoRegistration(
   now: Date = new Date(),
 ): Promise<CronRunResult> {
@@ -31,15 +44,16 @@ export async function runScheduledAutoRegistration(
 
   const clock = getLaClock(now);
   const laDate = formatLaDateString(now);
+  const mode = getCronScheduleMode();
 
   const wStart = SCHEDULE_LA_WINDOW_START_MINUTE;
   const wEnd = SCHEDULE_LA_WINDOW_END_MINUTE;
 
-  if (clock.hour !== 2) {
+  if (!laHourAllowedForCron(clock)) {
     return {
       ok: true,
       skipped: true,
-      reason: `outside_2am_hour (LA hour=${clock.hour})`,
+      reason: `outside_la_night_hour (LA hour=${clock.hour}, mode=${mode})`,
       laDate,
     };
   }
@@ -59,7 +73,7 @@ export async function runScheduledAutoRegistration(
     {
       $setOnInsert: {
         laDate,
-        targetMinute: rand,
+        targetMinute: mode === "hobby" ? clock.minute : rand,
         autoRunCompletedAt: null,
         processing: false,
       },
@@ -76,7 +90,10 @@ export async function runScheduledAutoRegistration(
     return { ok: true, skipped: true, reason: "already_ran_today", laDate };
   }
 
-  if (clock.minute < doc.targetMinute) {
+  if (
+    mode === "pro" &&
+    clock.minute < doc.targetMinute
+  ) {
     return {
       ok: true,
       skipped: true,
@@ -85,16 +102,27 @@ export async function runScheduledAutoRegistration(
     };
   }
 
-  const lock = await ScheduleState.findOneAndUpdate(
-    {
-      laDate,
-      autoRunCompletedAt: null,
-      targetMinute: { $lte: clock.minute },
-      processing: { $ne: true },
-    },
-    { $set: { processing: true } },
-    { new: true },
-  );
+  const lock =
+    mode === "pro"
+      ? await ScheduleState.findOneAndUpdate(
+          {
+            laDate,
+            autoRunCompletedAt: null,
+            targetMinute: { $lte: clock.minute },
+            processing: { $ne: true },
+          },
+          { $set: { processing: true } },
+          { new: true },
+        )
+      : await ScheduleState.findOneAndUpdate(
+          {
+            laDate,
+            autoRunCompletedAt: null,
+            processing: { $ne: true },
+          },
+          { $set: { processing: true } },
+          { new: true },
+        );
 
   if (!lock) {
     return { ok: true, skipped: true, reason: "claim_failed", laDate };

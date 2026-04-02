@@ -1,6 +1,6 @@
 # parking-at-boulevard
 
-Next.js dashboard for automated parking permit registration: monthly hour cap (LA timezone), event history, and a cron-driven run in the 2:00–2:55 LA window with a random target minute per day.
+Next.js dashboard for automated parking permit registration: monthly hour cap (LA timezone), event history, and a daily cron-driven registration (see **Cron** below for Hobby vs Pro).
 
 ## Setup
 
@@ -14,7 +14,9 @@ Next.js dashboard for automated parking permit registration: monthly hour cap (L
 
 - After a successful manual registration, open DevTools → **Network**, copy the **POST** request URL into `PARKING_POST_URL` (or `PARKING_POST_RELATIVE_PATH`). [`lib/register.ts`](lib/register.ts) GETs the permit page (optional `PARKING_SKIP_PAGE_GET=true` then POSTs JSON built in [`lib/parking-post.ts`](lib/parking-post.ts); override with `PARKING_POST_BODY_JSON` using `{{VEHICLE}}` placeholders).
 
-- Cron: [`vercel.json`](vercel.json) runs `GET /api/cron/register` every five minutes between **09:00–11:59 UTC**, which covers the Los Angeles 02:00–02:55 window year-round; the handler enforces LA time and random minute logic.
+- **Cron (Vercel Hobby):** [`vercel.json`](vercel.json) uses **one** daily schedule (`15 10 * * *` = 10:15 UTC). Hobby only allows a single daily run, not `*/5 …`. Default `CRON_SCHEDULE_MODE` is **`hobby`**: LA **hour 2 or 3**, minute window 0–55, **no** random-minute polling. In summer (PDT) the same UTC tick can fall around **3:xx LA**; adjust the cron expression in `vercel.json` if you need a different local time.
+
+- **Cron (Vercel Pro):** set `CRON_SCHEDULE_MODE=pro` in env and replace the `crons[0].schedule` in `vercel.json` with a multi-minute pattern (e.g. `*/5 9-11 * * *`) so random target minutes work again.
 
 - On Vercel, set `CRON_SECRET`; Vercel sends `Authorization: Bearer <CRON_SECRET>` to cron invocations.
 
@@ -32,7 +34,7 @@ Next.js dashboard for automated parking permit registration: monthly hour cap (L
 ## Vercel
 
 - **Framework preset:** Next.js (not Create React App). If the build runs `react-scripts build`, open **Project → Settings → General** and remove the custom **Build Command**, or keep the repo [`vercel.json`](vercel.json) which sets `buildCommand` to `npm run build`.
-- Copy all env vars from `.env.local` into the Vercel project **Environment Variables** (including `MONGODB_URI` for Atlas).
+- Copy all env vars from `.env.local` into the Vercel project **Environment Variables** (including `MONGODB_URI` for Atlas). Leave `CRON_SCHEDULE_MODE` unset or `hobby` on Hobby; use `pro` only if you upgrade and use multi-tick crons.
 
 ## License
 
