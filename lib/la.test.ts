@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatLaDateString, getLaClock, getLaMonthRangeUtc } from "./la";
+import {
+  formatLaDateString,
+  getLaClock,
+  getLaMidnightViewpointIso,
+  getLaMonthRangeUtc,
+  getLaStartOfDayUtc,
+} from "./la";
 
 describe("formatLaDateString", () => {
   it("maps UTC instant to LA calendar date", () => {
@@ -21,6 +27,16 @@ describe("getLaMonthRangeUtc", () => {
     const { start, endExclusive } = getLaMonthRangeUtc(dec);
     expect(formatLaDateString(start)).toBe("2026-12-01");
     expect(endExclusive.getTime()).toBeGreaterThan(start.getTime());
+  });
+});
+
+describe("getLaStartOfDayUtc / getLaMidnightViewpointIso", () => {
+  it("uses LA midnight for the calendar day containing the instant", () => {
+    const now = new Date("2026-04-02T19:00:00.000Z");
+    expect(getLaMidnightViewpointIso(now)).toBe("2026-04-02T07:00:00.000Z");
+    expect(getLaStartOfDayUtc(now).toISOString()).toBe(
+      "2026-04-02T07:00:00.000Z",
+    );
   });
 });
 

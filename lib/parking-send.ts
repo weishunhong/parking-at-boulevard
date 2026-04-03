@@ -1,3 +1,4 @@
+import { getLaMidnightViewpointIso } from "./la";
 import type { ParkingFormEnv } from "./parking-env";
 
 /**
@@ -5,7 +6,10 @@ import type { ParkingFormEnv } from "./parking-env";
  * `POST /v1/send?viewpoint=...&container=...&to=...` (see browser Network tab).
  * Set `PARKING_SEND_CONTAINER` from that request; `to` uses `PARKING_EMAIL`.
  */
-export function buildParkingSendUrl(form: ParkingFormEnv): string | null {
+export function buildParkingSendUrl(
+  form: ParkingFormEnv,
+  at: Date = new Date(),
+): string | null {
   if (process.env.PARKING_SKIP_SEND === "true") return null;
   const container = process.env.PARKING_SEND_CONTAINER?.trim();
   const email = form.email?.trim();
@@ -16,7 +20,7 @@ export function buildParkingSendUrl(form: ParkingFormEnv): string | null {
     "",
   );
   const u = new URL(`${form.apiBaseUrl}/${path}`);
-  u.searchParams.set("viewpoint", new Date().toISOString());
+  u.searchParams.set("viewpoint", getLaMidnightViewpointIso(at));
   u.searchParams.set("container", container);
   u.searchParams.set("to", email);
   return u.toString();

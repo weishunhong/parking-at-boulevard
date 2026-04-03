@@ -5,6 +5,20 @@ export function formatLaDateString(date: Date): string {
   return formatInTimeZone(date, TZ, "yyyy-MM-dd");
 }
 
+/**
+ * Start of the LA calendar day containing `date` (00:00 America/Los_Angeles).
+ * Used as PropertyBoss `viewpoint` so a PT5H permit is midnight–5:00 LA.
+ */
+export function getLaStartOfDayUtc(date: Date): Date {
+  const ymd = formatLaDateString(date);
+  return fromZonedTime(`${ymd}T00:00:00`, TZ);
+}
+
+/** ISO string for API query params (`viewpoint=`) */
+export function getLaMidnightViewpointIso(date: Date): string {
+  return getLaStartOfDayUtc(date).toISOString();
+}
+
 /** Start of LA calendar month and start of next LA month (UTC instants). */
 export function getLaMonthRangeUtc(now: Date): {
   start: Date;

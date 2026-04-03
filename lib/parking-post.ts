@@ -1,8 +1,10 @@
+import { getLaMidnightViewpointIso } from "./la";
 import type { ParkingFormEnv } from "./parking-env";
 
-/** Placeholders for PARKING_POST_BODY_JSON: {{SMART_DECAL}}, {{VEHICLE}}, … */
+/** Placeholders for PARKING_POST_BODY_JSON: {{SMART_DECAL}}, {{VEHICLE}}, {{VIEWPOINT}}, … */
 export function parkingPostPlaceholders(
   form: ParkingFormEnv,
+  at: Date = new Date(),
 ): Record<string, string> {
   return {
     SMART_DECAL: form.smartDecalNumber ?? "",
@@ -16,6 +18,7 @@ export function parkingPostPlaceholders(
     TENANT: form.tenantSlug,
     EMAIL: form.email ?? "",
     CONTACT_NAME: form.contactName ?? "",
+    VIEWPOINT: getLaMidnightViewpointIso(at),
   };
 }
 
@@ -30,11 +33,14 @@ export function substitutePlaceholders(
 
 /**
  * When `PARKING_POST_URL` is copied from the browser, the query string often
- * still contains `duration=PT1H` (or similar). The API uses that for the permit
- * length. We override `duration` and refresh `viewpoint` from the current run
- * so `REGISTRATION_DURATION_HOURS` / `PARKING_LIFETIME_ISO` actually apply.
+ * still contains `duration=PT1H` (or similar). We override `duration` from env
+ * and set `viewpoint` to **LA midnight** for the current LA calendar day so
+ * PT5H means 12:00–5:00 LA (see `getLaMidnightViewpointIso`).
  */
-export function resolveParkingPostUrl(form: ParkingFormEnv): string | null {
+export function resolveParkingPostUrl(
+  form: ParkingFormEnv,
+  at: Date = new Date(),
+): string | null {
   const full = process.env.PARKING_POST_URL?.trim();
   if (full) {
     try {
@@ -43,7 +49,7 @@ export function resolveParkingPostUrl(form: ParkingFormEnv): string | null {
         u.searchParams.set("duration", form.lifetimeIso);
       }
       if (u.searchParams.has("viewpoint")) {
-        u.searchParams.set("viewpoint", new Date().toISOString());
+        u.searchParams.set("viewpoint", getLaMidnightViewpointIso(at));
       }
       return u.toString();
     } catch {
@@ -87,9 +93,12 @@ export function buildDefaultPostPayload(
   });
 }
 
-export function buildPostJsonBody(form: ParkingFormEnv): string {
+export function buildPostJsonBody(
+  form: ParkingFormEnv,
+  at: Date = new Date(),
+): string {
   const raw = process.env.PARKING_POST_BODY_JSON?.trim();
-  const vars = parkingPostPlaceholders(form);
+  const vars = parkingPostPlaceholders(form, at);
   if (raw) {
     const filled = substitutePlaceholders(raw, vars);
     try {
@@ -106,12 +115,13 @@ export function buildPostJsonBody(form: ParkingFormEnv): string {
 
 export async function postParkingRegistration(
   form: ParkingFormEnv,
+  at: Date = new Date(),
 ): Promise<{ ok: boolean; status: number; bodyText: string }> {
-  const url = resolveParkingPostUrl(form);
+  const url = resolveParkingPostUrl(form, at);
   if (!url) {
     throw new Error("missing_post_url");
   }
-  const body = buildPostJsonBody(form);
+  const body = buildPostJsonBody(form, at);
   const cookie = form.cookie ?? "";
   const bearer = process.env.PARKING_BEARER_TOKEN?.trim();
 

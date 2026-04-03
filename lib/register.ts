@@ -104,6 +104,7 @@ async function submitPermitFlow(
   durationHours: number,
   form: ReturnType<typeof getParkingFormEnv>,
 ): Promise<RegisterResult> {
+  const at = new Date();
   const cookie = form.cookie ?? "";
   const skipGet = process.env.PARKING_SKIP_PAGE_GET === "true";
 
@@ -133,7 +134,7 @@ async function submitPermitFlow(
     }
   }
 
-  const postUrl = resolveParkingPostUrl(form);
+  const postUrl = resolveParkingPostUrl(form, at);
   if (!postUrl) {
     return {
       success: false,
@@ -151,7 +152,7 @@ async function submitPermitFlow(
   }
 
   try {
-    buildPostJsonBody(form);
+    buildPostJsonBody(form, at);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return {
@@ -162,7 +163,7 @@ async function submitPermitFlow(
     };
   }
 
-  const post = await postParkingRegistration(form);
+  const post = await postParkingRegistration(form, at);
 
   if (!post.ok) {
     return {
@@ -176,7 +177,7 @@ async function submitPermitFlow(
     };
   }
 
-  const sendUrl = buildParkingSendUrl(form);
+  const sendUrl = buildParkingSendUrl(form, at);
   if (sendUrl) {
     const send = await postParkingSend(sendUrl, form);
     if (!send.ok) {
