@@ -1,4 +1,3 @@
-import { getLaMidnightViewpointIso } from "./la";
 import type { ParkingFormEnv } from "./parking-env";
 
 /** Placeholders for PARKING_POST_BODY_JSON: {{SMART_DECAL}}, {{VEHICLE}}, {{VIEWPOINT}}, … */
@@ -18,7 +17,7 @@ export function parkingPostPlaceholders(
     TENANT: form.tenantSlug,
     EMAIL: form.email ?? "",
     CONTACT_NAME: form.contactName ?? "",
-    VIEWPOINT: getLaMidnightViewpointIso(at),
+    VIEWPOINT: at.toISOString(),
   };
 }
 
@@ -34,8 +33,8 @@ export function substitutePlaceholders(
 /**
  * When `PARKING_POST_URL` is copied from the browser, the query string often
  * still contains `duration=PT1H` (or similar). We override `duration` from env
- * and set `viewpoint` to **LA midnight** for the current LA calendar day so
- * PT5H means 12:00–5:00 LA (see `getLaMidnightViewpointIso`).
+ * and set `viewpoint` to the **request instant** (same as when the cron/manual
+ * run executes) so PT5H starts from that moment.
  */
 export function resolveParkingPostUrl(
   form: ParkingFormEnv,
@@ -49,7 +48,7 @@ export function resolveParkingPostUrl(
         u.searchParams.set("duration", form.lifetimeIso);
       }
       if (u.searchParams.has("viewpoint")) {
-        u.searchParams.set("viewpoint", getLaMidnightViewpointIso(at));
+        u.searchParams.set("viewpoint", at.toISOString());
       }
       return u.toString();
     } catch {

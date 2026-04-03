@@ -10,7 +10,7 @@ export const REGISTRATION_DURATION_HOURS = num(
   5,
 );
 
-/** Minute offset within the 2:00 LA hour (0 = 2:00, 55 = 2:55). */
+/** Minute within the LA midnight window (hour 0–1): 0 = :00, 55 = :55. */
 export const SCHEDULE_LA_WINDOW_START_MINUTE = num(
   process.env.SCHEDULE_LA_WINDOW_START_MINUTE,
   0,

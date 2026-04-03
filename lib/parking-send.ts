@@ -1,4 +1,3 @@
-import { getLaMidnightViewpointIso } from "./la";
 import type { ParkingFormEnv } from "./parking-env";
 
 /**
@@ -20,7 +19,7 @@ export function buildParkingSendUrl(
     "",
   );
   const u = new URL(`${form.apiBaseUrl}/${path}`);
-  u.searchParams.set("viewpoint", getLaMidnightViewpointIso(at));
+  u.searchParams.set("viewpoint", at.toISOString());
   u.searchParams.set("container", container);
   u.searchParams.set("to", email);
   return u.toString();

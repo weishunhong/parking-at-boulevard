@@ -53,8 +53,7 @@ describe("resolveParkingPostUrl", () => {
     expect(u).toBeTruthy();
     const parsed = new URL(u!);
     expect(parsed.searchParams.get("duration")).toBe("PT5H");
-    // LA calendar day 2026-04-02 midnight (PDT) → UTC
-    expect(parsed.searchParams.get("viewpoint")).toBe("2026-04-02T07:00:00.000Z");
+    expect(parsed.searchParams.get("viewpoint")).toBe("2026-04-02T19:00:00.000Z");
     expect(parsed.searchParams.get("vehicle")).toBe("X");
   });
 

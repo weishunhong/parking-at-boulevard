@@ -7,7 +7,10 @@ import {
   parseCalendarMonthQuery,
 } from "@/lib/calendar-la";
 import { connectDb } from "@/lib/db";
-import { formatLaDateString } from "@/lib/la";
+import {
+  formatLaDateString,
+  formatLaScheduleTargetClock,
+} from "@/lib/la";
 import { monthSummary } from "@/lib/monthly";
 import { RegistrationEvent } from "@/models/RegistrationEvent";
 import { ScheduleState } from "@/models/ScheduleState";
@@ -100,12 +103,47 @@ export default async function DashboardPage({
             Today&apos;s schedule (LA)
           </h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {sched
-              ? `Target minute (LA night window): 2:${String(sched.targetMinute).padStart(2, "0")}. `
-              : "No schedule row yet — the daily cron during the LA 2am hour creates it. "}
-            {sched?.autoRunCompletedAt
-              ? `Last auto run: ${formatLaDateTimeList(sched.autoRunCompletedAt)}.`
-              : "Auto run not completed yet today."}
+            {sched ? (
+              <>
+                Cron target (LA):{" "}
+                <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                  {formatLaScheduleTargetClock(
+                    sched.laDate,
+                    sched.targetMinute,
+                    sched.targetHourLa,
+                  )}
+                </span>
+                .{" "}
+              </>
+            ) : (
+              <>
+                No row for today&apos;s LA date yet. Your{" "}
+                <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                  daily Vercel cron
+                </span>{" "}
+                must run once in the Los Angeles{" "}
+                <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                  midnight window (~12:00–1:59am)
+                </span>{" "}
+                before this line appears (Hobby: one run per day).{" "}
+              </>
+            )}
+            {sched?.autoRunCompletedAt ? (
+              <>
+                Last automatic run:{" "}
+                {formatLaDateTimeList(sched.autoRunCompletedAt)}.
+              </>
+            ) : (
+              <>Automatic registration has not completed yet today.</>
+            )}
+          </p>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">viewpoint</code>{" "}
+            is the time of the run (cron ~12:xxam PST / ~1:xxam PDT with{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">vercel.json</code>{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">15 8 * * *</code>
+            ). <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">duration</code>{" "}
+            (e.g. PT5H) counts from that instant.
           </p>
         </section>
 

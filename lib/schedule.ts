@@ -25,16 +25,12 @@ export type CronRunResult =
       message: string;
     };
 
+/** Cron is aligned to ~12:xx LA (see vercel.json). One UTC tick may fall in LA hour 0 or 1 (DST). */
 function laHourAllowedForCron(clock: {
   hour: number;
   minute: number;
 }): boolean {
-  const mode = getCronScheduleMode();
-  if (mode === "hobby") {
-    // Single daily UTC tick can land at ~2:xx (PST) or ~3:xx (PDT); allow both.
-    return clock.hour === 2 || clock.hour === 3;
-  }
-  return clock.hour === 2;
+  return clock.hour === 0 || clock.hour === 1;
 }
 
 export async function runScheduledAutoRegistration(
@@ -53,7 +49,7 @@ export async function runScheduledAutoRegistration(
     return {
       ok: true,
       skipped: true,
-      reason: `outside_la_night_hour (LA hour=${clock.hour}, mode=${mode})`,
+      reason: `outside_la_midnight_window (LA hour=${clock.hour}, mode=${mode})`,
       laDate,
     };
   }
@@ -74,6 +70,7 @@ export async function runScheduledAutoRegistration(
       $setOnInsert: {
         laDate,
         targetMinute: mode === "hobby" ? clock.minute : rand,
+        targetHourLa: clock.hour,
         autoRunCompletedAt: null,
         processing: false,
       },

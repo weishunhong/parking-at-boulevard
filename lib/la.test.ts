@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   formatLaDateString,
+  formatLaScheduleTargetClock,
   getLaClock,
-  getLaMidnightViewpointIso,
   getLaMonthRangeUtc,
-  getLaStartOfDayUtc,
 } from "./la";
 
 describe("formatLaDateString", () => {
@@ -30,13 +29,11 @@ describe("getLaMonthRangeUtc", () => {
   });
 });
 
-describe("getLaStartOfDayUtc / getLaMidnightViewpointIso", () => {
-  it("uses LA midnight for the calendar day containing the instant", () => {
-    const now = new Date("2026-04-02T19:00:00.000Z");
-    expect(getLaMidnightViewpointIso(now)).toBe("2026-04-02T07:00:00.000Z");
-    expect(getLaStartOfDayUtc(now).toISOString()).toBe(
-      "2026-04-02T07:00:00.000Z",
-    );
+describe("formatLaScheduleTargetClock", () => {
+  it("formats stored LA hour + minute", () => {
+    expect(
+      formatLaScheduleTargetClock("2026-04-02", 15, 0),
+    ).toMatch(/12:15/);
   });
 });
 

@@ -48,7 +48,7 @@ describe("buildParkingSendUrl", () => {
     expect(u).toBeTruthy();
     const parsed = new URL(u!);
     expect(parsed.pathname).toBe("/v1/send");
-    expect(parsed.searchParams.get("viewpoint")).toBe("2026-04-02T07:00:00.000Z");
+    expect(parsed.searchParams.get("viewpoint")).toBe("2026-04-02T18:43:24.279Z");
     expect(parsed.searchParams.get("container")).toBe(
       "0q77rk8q813pf3rmjgpg9gp9a8",
     );
