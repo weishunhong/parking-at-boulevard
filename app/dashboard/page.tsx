@@ -134,9 +134,9 @@ export default async function DashboardPage({
           </p>
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
             <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">viewpoint</code>{" "}
-            is the time of the run (cron ~12:xxam PST / ~1:xxam PDT with{" "}
+            is the time of the run (cron ~12:00am PST / ~1:00am PDT with{" "}
             <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">vercel.json</code>{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">15 8 * * *</code>
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">0 8 * * *</code>
             ).{" "}
             <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">duration</code>{" "}
             (e.g. PT5H) counts from that instant.
