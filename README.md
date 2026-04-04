@@ -14,7 +14,7 @@ Next.js dashboard for automated parking permit registration: monthly hour cap (L
 
 - After a successful manual registration, open DevTools → **Network**, copy the **POST** request URL into `PARKING_POST_URL` (or `PARKING_POST_RELATIVE_PATH`). [`lib/register.ts`](lib/register.ts) GETs the permit page (optional `PARKING_SKIP_PAGE_GET=true` then POSTs JSON built in [`lib/parking-post.ts`](lib/parking-post.ts); override with `PARKING_POST_BODY_JSON` using `{{VEHICLE}}` placeholders).
 
-- **Cron (Vercel Hobby):** [`vercel.json`](vercel.json) uses **one** cron with `0 7,8 * * *` — that is **07:00 and 08:00 UTC** each day (two invocations, one schedule line). Los Angeles midnight is **07:00 UTC** (PDT) or **08:00 UTC** (PST); exactly one lands on **LA hour 0**; [`lib/schedule.ts`](lib/schedule.ts) skips the other. Default `CRON_SCHEDULE_MODE` is **`hobby`**.
+- **Cron (Vercel Hobby):** [`vercel.json`](vercel.json) uses **`30 7 * * *`** — **once per day** at **07:30 UTC**. Los Angeles midnight lines up with **06:30 UTC** (PDT, UTC−7) or **07:30 UTC** (PST, UTC−8); this single cron matches **07:30 UTC** (PST). [`lib/schedule.ts`](lib/schedule.ts) accepts the matching LA wall times (including **23:30** in winter when the UTC instant falls on the previous local evening). Default `CRON_SCHEDULE_MODE` is **`hobby`**.
 
 - **Cron (Vercel Pro):** set `CRON_SCHEDULE_MODE=pro` in env and replace the `crons[0].schedule` in `vercel.json` with a multi-minute pattern (e.g. `*/5 9-11 * * *`) so random target minutes work again.
 

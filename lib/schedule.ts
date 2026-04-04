@@ -5,6 +5,7 @@ import {
   SCHEDULE_LA_WINDOW_END_MINUTE,
   SCHEDULE_LA_WINDOW_START_MINUTE,
   getCronScheduleMode,
+  type CronScheduleMode,
 } from "./env";
 import { formatLaDateString, getLaClock } from "./la";
 import { registerViaAutomation } from "./register";
@@ -26,15 +27,20 @@ export type CronRunResult =
     };
 
 /**
- * Vercel cron is UTC-only; Hobby allows one cron entry. Schedule `0 7,8 * * *` fires at
- * 07:00 and 08:00 UTC daily. LA midnight is 07:00 UTC (PDT) or 08:00 UTC (PST); exactly
- * one lands on LA hour 0 — the other hits hour 23 or 1 and is skipped here.
+ * Single daily UTC cron (`30 7 * * *` → 07:30 UTC). LA midnight mapping you use:
+ * PDT (UTC−7): **06:30 UTC** · PST (UTC−8): **07:30 UTC** — this schedule matches **07:30 UTC**
+ * (PST midnight); PDT hits **00:30 LA**. Winter 07:30 UTC is **23:30 LA** (hour 23).
  */
-function laHourAllowedForCron(clock: {
-  hour: number;
-  minute: number;
-}): boolean {
-  return clock.hour === 0;
+export function isLaHourInCronWindow(
+  clock: { hour: number; minute: number },
+  _mode: CronScheduleMode,
+): boolean {
+  void _mode;
+  return (
+    clock.hour === 0 ||
+    clock.hour === 1 ||
+    (clock.hour === 23 && clock.minute >= 30)
+  );
 }
 
 export async function runScheduledAutoRegistration(
@@ -49,7 +55,7 @@ export async function runScheduledAutoRegistration(
   const wStart = SCHEDULE_LA_WINDOW_START_MINUTE;
   const wEnd = SCHEDULE_LA_WINDOW_END_MINUTE;
 
-  if (!laHourAllowedForCron(clock)) {
+  if (!isLaHourInCronWindow(clock, mode)) {
     return {
       ok: true,
       skipped: true,
