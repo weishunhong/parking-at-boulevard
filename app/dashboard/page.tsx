@@ -144,13 +144,14 @@ export default async function DashboardPage({
             <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">viewpoint</code>{" "}
             is the run instant sent to the API.{" "}
             <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">duration</code>{" "}
-            (e.g. PT5H) counts from that instant. Vercel runs{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">0 8 * * *</code>{" "}
-            on the server (UTC); in{" "}
+            (e.g. PT5H) counts from that instant. One cron job uses{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">0 7,8 * * *</code>{" "}
+            (07:00 and 08:00 UTC daily) so one trigger always falls on{" "}
             <span className="font-medium text-zinc-600 dark:text-zinc-300">
-              Los Angeles local time
+              midnight Los Angeles
             </span>{" "}
-            that is usually just after midnight. Every time on this page uses the same
+            (PDT → 07:00 UTC, PST → 08:00 UTC; the other tick is skipped). Actual run may
+            be a few minutes later after cold start. Displayed times use the Los Angeles
             local clock, not UTC.
           </p>
         </section>

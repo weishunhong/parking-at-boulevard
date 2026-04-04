@@ -25,12 +25,16 @@ export type CronRunResult =
       message: string;
     };
 
-/** Cron is aligned to ~12:xx LA (see vercel.json). One UTC tick may fall in LA hour 0 or 1 (DST). */
+/**
+ * Vercel cron is UTC-only; Hobby allows one cron entry. Schedule `0 7,8 * * *` fires at
+ * 07:00 and 08:00 UTC daily. LA midnight is 07:00 UTC (PDT) or 08:00 UTC (PST); exactly
+ * one lands on LA hour 0 — the other hits hour 23 or 1 and is skipped here.
+ */
 function laHourAllowedForCron(clock: {
   hour: number;
   minute: number;
 }): boolean {
-  return clock.hour === 0 || clock.hour === 1;
+  return clock.hour === 0;
 }
 
 export async function runScheduledAutoRegistration(
@@ -63,13 +67,16 @@ export async function runScheduledAutoRegistration(
     };
   }
 
-  const rand = randomIntInclusive(wStart, wEnd);
+  const targetMinuteForInsert =
+    mode === "pro"
+      ? randomIntInclusive(wStart, wEnd)
+      : clock.minute;
   await ScheduleState.findOneAndUpdate(
     { laDate },
     {
       $setOnInsert: {
         laDate,
-        targetMinute: mode === "hobby" ? clock.minute : rand,
+        targetMinute: targetMinuteForInsert,
         targetHourLa: clock.hour,
         autoRunCompletedAt: null,
         processing: false,

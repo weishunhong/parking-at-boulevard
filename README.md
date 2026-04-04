@@ -14,7 +14,7 @@ Next.js dashboard for automated parking permit registration: monthly hour cap (L
 
 - After a successful manual registration, open DevTools → **Network**, copy the **POST** request URL into `PARKING_POST_URL` (or `PARKING_POST_RELATIVE_PATH`). [`lib/register.ts`](lib/register.ts) GETs the permit page (optional `PARKING_SKIP_PAGE_GET=true` then POSTs JSON built in [`lib/parking-post.ts`](lib/parking-post.ts); override with `PARKING_POST_BODY_JSON` using `{{VEHICLE}}` placeholders).
 
-- **Cron (Vercel Hobby):** [`vercel.json`](vercel.json) uses **one** daily schedule (`15 10 * * *` = 10:15 UTC). Hobby only allows a single daily run, not `*/5 …`. Default `CRON_SCHEDULE_MODE` is **`hobby`**: LA **hour 2 or 3**, minute window 0–55, **no** random-minute polling. In summer (PDT) the same UTC tick can fall around **3:xx LA**; adjust the cron expression in `vercel.json` if you need a different local time.
+- **Cron (Vercel Hobby):** [`vercel.json`](vercel.json) uses **one** cron with `0 7,8 * * *` — that is **07:00 and 08:00 UTC** each day (two invocations, one schedule line). Los Angeles midnight is **07:00 UTC** (PDT) or **08:00 UTC** (PST); exactly one lands on **LA hour 0**; [`lib/schedule.ts`](lib/schedule.ts) skips the other. Default `CRON_SCHEDULE_MODE` is **`hobby`**.
 
 - **Cron (Vercel Pro):** set `CRON_SCHEDULE_MODE=pro` in env and replace the `crons[0].schedule` in `vercel.json` with a multi-minute pattern (e.g. `*/5 9-11 * * *`) so random target minutes work again.
 
