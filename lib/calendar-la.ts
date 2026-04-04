@@ -1,7 +1,7 @@
 import { getDaysInMonth } from "date-fns";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { TZ } from "./env";
-import { formatLaDateString } from "./la";
+import { formatLocalDateString } from "./la";
 
 export function parseCalendarMonthQuery(
   sp: Record<string, string | string[] | undefined>,
@@ -98,7 +98,7 @@ export function groupEventsByLaDate<T extends RegistrationEventLike>(
 ): Map<string, T[]> {
   const map = new Map<string, T[]>();
   for (const ev of events) {
-    const key = formatLaDateString(new Date(ev.createdAt));
+    const key = formatLocalDateString(new Date(ev.createdAt));
     const list = map.get(key) ?? [];
     list.push(ev);
     map.set(key, list);
@@ -112,11 +112,28 @@ export function groupEventsByLaDate<T extends RegistrationEventLike>(
   return map;
 }
 
-export function formatLaTimeLabel(iso: Date | string): string {
+/**
+ * All UI times use `TZ_DISPLAY` (default `America/Los_Angeles`) — Los Angeles
+ * local wall clock, with DST applied. Not UTC.
+ */
+export function formatLocalTime(iso: Date | string): string {
   return formatInTimeZone(new Date(iso), TZ, "h:mm a");
 }
 
-/** For list rows: date + time in LA (readable, not raw ISO). */
-export function formatLaDateTimeList(iso: Date | string): string {
+/** Date + time on the same local clock as {@link formatLocalTime}. */
+export function formatLocalDateTime(iso: Date | string): string {
   return formatInTimeZone(new Date(iso), TZ, "MMM d, yyyy · h:mm a");
 }
+
+/**
+ * Value for HTML `<time datetime="...">` — ISO 8601 with the app timezone
+ * offset (e.g. `-07:00`), not `...Z` UTC.
+ */
+export function formatLocalDateTimeForHtmlTime(iso: Date | string): string {
+  return formatInTimeZone(new Date(iso), TZ, "yyyy-MM-dd'T'HH:mm:ssXXX");
+}
+
+/** @alias {@link formatLocalTime} */
+export const formatLaTimeLabel = formatLocalTime;
+/** @alias {@link formatLocalDateTime} */
+export const formatLaDateTimeList = formatLocalDateTime;

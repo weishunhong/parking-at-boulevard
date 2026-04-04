@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildLaCalendarGrid,
-  formatLaDateTimeList,
+  formatLocalDateTime,
+  formatLocalDateTimeForHtmlTime,
   getLaMonthRangeUtcForCalendarMonth,
   groupEventsByLaDate,
   parseCalendarMonthQuery,
@@ -41,11 +42,19 @@ describe("groupEventsByLaDate", () => {
   });
 });
 
-describe("formatLaDateTimeList", () => {
-  it("formats in LA", () => {
-    const s = formatLaDateTimeList(new Date("2026-04-02T21:09:29.900Z"));
+describe("formatLocalDateTime / formatLocalDateTimeForHtmlTime", () => {
+  it("formats visible string in app TZ", () => {
+    const s = formatLocalDateTime(new Date("2026-04-02T21:09:29.900Z"));
     expect(s).toMatch(/2026/);
     expect(s).toMatch(/Apr/);
+  });
+
+  it("uses offset in datetime attr, not UTC Z", () => {
+    const attr = formatLocalDateTimeForHtmlTime(
+      new Date("2026-04-02T21:09:29.900Z"),
+    );
+    expect(attr).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+    expect(attr.endsWith("Z")).toBe(false);
   });
 });
 

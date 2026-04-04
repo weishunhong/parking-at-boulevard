@@ -1,15 +1,16 @@
 import Link from "next/link";
 import {
-  formatLaDateTimeList,
-  formatLaTimeLabel,
+  formatLocalDateTime,
+  formatLocalDateTimeForHtmlTime,
+  formatLocalTime,
   getLaMonthRangeUtcForCalendarMonth,
   groupEventsByLaDate,
   parseCalendarMonthQuery,
 } from "@/lib/calendar-la";
 import { connectDb } from "@/lib/db";
 import {
-  formatLaDateString,
-  formatLaScheduleTargetClock,
+  formatLocalDateString,
+  formatLocalScheduleClock,
 } from "@/lib/la";
 import { monthSummary } from "@/lib/monthly";
 import { RegistrationEvent } from "@/models/RegistrationEvent";
@@ -40,8 +41,8 @@ export default async function DashboardPage({
     const isViewingCurrentMonth =
       calYear === currentLaYear && calMonth === currentLaMonth;
 
-    const laDate = formatLaDateString(now);
-    const todayLaKey = formatLaDateString(now);
+    const laDate = formatLocalDateString(now);
+    const todayLaKey = formatLocalDateString(now);
 
     const { start: monthStart, endExclusive: monthEnd } =
       getLaMonthRangeUtcForCalendarMonth(calYear, calMonth);
@@ -68,7 +69,7 @@ export default async function DashboardPage({
     for (const [dateKey, list] of grouped) {
       eventsByDay[dateKey] = list.map((ev) => ({
         id: String(ev._id),
-        timeLabel: formatLaTimeLabel(ev.createdAt),
+        timeLabel: formatLocalTime(ev.createdAt),
         status: ev.status as "success" | "failure",
         trigger: ev.trigger as "cron" | "manual",
         durationHours: ev.durationHours,
@@ -87,6 +88,13 @@ export default async function DashboardPage({
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 {remainingHours.toFixed(1)} h remaining
               </span>
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              All times on this page are{" "}
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                Los Angeles local time
+              </span>{" "}
+              (the city&apos;s wall clock; daylight saving is applied automatically).
             </p>
           </div>
           <DashboardActions />
@@ -114,7 +122,7 @@ export default async function DashboardPage({
               <>
                 Cron target (LA):{" "}
                 <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                  {formatLaScheduleTargetClock(
+                  {formatLocalScheduleClock(
                     sched.laDate,
                     sched.targetMinute,
                     sched.targetHourLa,
@@ -124,7 +132,7 @@ export default async function DashboardPage({
                 {sched.autoRunCompletedAt ? (
                   <>
                     Last automatic run:{" "}
-                    {formatLaDateTimeList(sched.autoRunCompletedAt)}.
+                    {formatLocalDateTime(sched.autoRunCompletedAt)}.
                   </>
                 ) : (
                   <>Automatic registration has not completed yet today.</>
@@ -134,12 +142,16 @@ export default async function DashboardPage({
           </p>
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
             <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">viewpoint</code>{" "}
-            is the time of the run (cron ~12:00am PST / ~1:00am PDT with{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">vercel.json</code>{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">0 8 * * *</code>
-            ).{" "}
+            is the run instant sent to the API.{" "}
             <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">duration</code>{" "}
-            (e.g. PT5H) counts from that instant.
+            (e.g. PT5H) counts from that instant. Vercel runs{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">0 8 * * *</code>{" "}
+            on the server (UTC); in{" "}
+            <span className="font-medium text-zinc-600 dark:text-zinc-300">
+              Los Angeles local time
+            </span>{" "}
+            that is usually just after midnight. Every time on this page uses the same
+            local clock, not UTC.
           </p>
         </section>
 
@@ -182,9 +194,9 @@ export default async function DashboardPage({
                     </span>
                     <time
                       className="text-xs text-zinc-500"
-                      dateTime={new Date(ev.createdAt).toISOString()}
+                      dateTime={formatLocalDateTimeForHtmlTime(ev.createdAt)}
                     >
-                      {formatLaDateTimeList(ev.createdAt)}
+                      {formatLocalDateTime(ev.createdAt)}
                     </time>
                   </div>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">

@@ -178,9 +178,9 @@ export function RegistrationCalendar({
         </div>
       </div>
       <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-        Times are{" "}
+        Chip times are{" "}
         <span className="font-medium text-zinc-600 dark:text-zinc-300">
-          America/Los_Angeles
+          Los Angeles local
         </span>
         . Each chip is one run (success = green, failure = red).
       </p>

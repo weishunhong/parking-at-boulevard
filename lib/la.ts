@@ -1,12 +1,15 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { TZ } from "./env";
 
+/** Calendar date (YYYY-MM-DD) in the app local timezone (`TZ_DISPLAY`). */
 export function formatLaDateString(date: Date): string {
   return formatInTimeZone(date, TZ, "yyyy-MM-dd");
 }
 
-/** Display cron target clock for dashboard (uses stored LA hour + minute). */
-export function formatLaScheduleTargetClock(
+export const formatLocalDateString = formatLaDateString;
+
+/** Cron target on the app local clock (`TZ_DISPLAY`). */
+export function formatLocalScheduleClock(
   laDateYmd: string,
   targetMinute: number,
   targetHourLa?: number | null,
@@ -18,6 +21,8 @@ export function formatLaScheduleTargetClock(
   );
   return formatInTimeZone(d, TZ, "h:mm a");
 }
+
+export const formatLaScheduleTargetClock = formatLocalScheduleClock;
 
 /** Start of LA calendar month and start of next LA month (UTC instants). */
 export function getLaMonthRangeUtc(now: Date): {
